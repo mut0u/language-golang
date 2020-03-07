@@ -5,7 +5,6 @@
 --
 -- x
 module Language.Go.Parser.Tokens where
-import Language.Go.Syntax.AST (GoSource)
 import Language.Go.Syntax.AST
 import Text.Parsec.String
 import Text.Parsec.Prim hiding (token)
@@ -113,12 +112,12 @@ tokenSimplify :: (Int, Int) -> String -> String
 tokenSimplify (n, m) s = map (s!!) [n..(length s)-m-1]
 
 tokenFromId :: String -> GoToken
-tokenFromId s = GoTokId $ if s!!0 == '#' && s!!1 == '['
+tokenFromId s = GoTokId $ if head s == '#' && s!!1 == '['
                           then tokenSimplify (2, 1) s
                           else s
 
 tokenFromOp :: String -> GoToken
-tokenFromOp s = GoTokOp $ if s!!0 == '#' && s!!1 == '{'
+tokenFromOp s = GoTokOp $ if head s == '#' && s!!1 == '{'
                           then tokenSimplify (2, 1) s
                           else s
 
@@ -128,13 +127,13 @@ tokenFromComment False s = GoTokComment False $ tokenSimplify (2, 1) s
 tokenFromComment True  s = GoTokComment True  $ tokenSimplify (2, 2) s
 
 tokenFromInt :: String -> GoToken
-tokenFromInt s = GoTokInt (Just s) $ ((read s) :: Integer)
+tokenFromInt s = GoTokInt (Just s) (read s :: Integer)
 
 tokenFromReal :: String -> GoToken
-tokenFromReal s = GoTokReal (Just s) $ (read s)
+tokenFromReal s = GoTokReal (Just s) (read s)
 
 tokenFromImag :: String -> GoToken
-tokenFromImag s = GoTokImag (Just s) $ (read $ init s)
+tokenFromImag s = GoTokImag (Just s) (read $ init s)
 
 tokenFromRawStr :: String -> GoToken
 tokenFromRawStr s = GoTokStr (Just s) $ tokenSimplify (1, 1) s
@@ -167,18 +166,20 @@ token tok = Prim.token showTok posnTok testTok
                                        else Nothing
 
 stripComments :: [GoTokenPos] -> [GoTokenPos]
-stripComments tokens = map nocomm tokens where
-    nocomm (xt@(GoTokenPos xp x)) = if (tokenEq x (GoTokComment False ""))
+stripComments = map nocomm
+  where
+    nocomm (xt@(GoTokenPos xp x)) = if tokenEq x (GoTokComment False "")
                                     then (GoTokenPos xp GoTokSemicolonAuto)
                                     else xt
 
 stripNone :: [GoTokenPos] -> [GoTokenPos]
-stripNone tokens = filter nonull tokens where
-    nonull (GoTokenPos _ x) = (x /= GoTokNone)
+stripNone = filter nonull
+  where
+    nonull (GoTokenPos _ x) = x /= GoTokNone
 
 stripAuto :: [GoTokenPos] -> [GoTokenPos]
 stripAuto tokens = filter nonull tokens where
-    nonull (GoTokenPos _ x) = (x /= GoTokSemicolonAuto)
+    nonull (GoTokenPos _ x) = x /= GoTokSemicolonAuto
 
 needSemi :: GoToken -> Bool
 needSemi token = case token of
@@ -213,98 +214,98 @@ insertSemi = stripAuto . stripNone .
 
 insertAfter :: [GoTokenPos] -> [GoTokenPos]
 insertAfter [] = []
-insertAfter ((xt@(GoTokenPos xp x)):[]) = (xt:[])
-insertAfter ((xt@(GoTokenPos _ x)):(yt@(GoTokenPos yp y)):zs) = xt:(insertAfter ((repl y):zs))
+insertAfter [xt] = [xt]
+insertAfter ((xt@(GoTokenPos _ x)):(yt@(GoTokenPos yp y)):zs) = xt:(insertAfter (repl y : zs))
     where cond = if needSemi x then GoTokSemicolon else GoTokNone
           repl GoTokSemicolonAuto = GoTokenPos yp cond
           repl _ = yt
 
 insertBefore :: [GoTokenPos] -> [GoTokenPos]
 insertBefore [] = []
-insertBefore ((xt@(GoTokenPos xp x)):[]) = xt:[]
+insertBefore [xt@(GoTokenPos xp x)] = [xt]
 insertBefore ((xt@(GoTokenPos xp x)):(yt@(GoTokenPos yp y)):zs) = out
-    where repl (GoTokRBrace) (GoTokSemicolon) = GoTokenPos xp GoTokSemicolonAuto
-          repl (GoTokRBrace) (GoTokElse) = GoTokenPos xp GoTokSemicolonAuto
+    where repl GoTokRBrace GoTokSemicolon = GoTokenPos xp GoTokSemicolonAuto
+          repl GoTokRBrace GoTokElse = GoTokenPos xp GoTokSemicolonAuto
 --          repl (GoTokRParen) (GoTokSemicolon) = GoTokenPos xp GoTokSemicolonAuto
           repl _ _ = GoTokenPos xp GoTokNone
-          out = ((repl x y):xt:(insertBefore (yt:zs)))
+          out = (repl x y):xt:insertBefore (yt:zs)
 
 
 
 -- token parsers
 
-goTokLParen   = token $ GoTokLParen
-goTokRParen   = token $ GoTokRParen
-goTokLBrace   = token $ GoTokLBrace
-goTokRBrace   = token $ GoTokRBrace
-goTokLBracket = token $ GoTokLBracket
-goTokRBracket = token $ GoTokRBracket
+goTokLParen   = token GoTokLParen
+goTokRParen   = token GoTokRParen
+goTokLBrace   = token GoTokLBrace
+goTokRBrace   = token GoTokRBrace
+goTokLBracket = token GoTokLBracket
+goTokRBracket = token GoTokRBracket
 
-goTokSemicolon= token $ GoTokSemicolon -- ';'
-goTokColon    = token $ GoTokColon     -- ':'
-goTokColonEq  = token $ GoTokColonEq   -- ':='
-goTokEqual    = token $ GoTokEqual     -- '='
-goTokComma    = token $ GoTokComma     -- ','
-goTokFullStop = token $ GoTokFullStop  -- '.'
-goTokElipsis  = token $ GoTokElipsis   -- '...'
+goTokSemicolon = token GoTokSemicolon -- ';'
+goTokColon     = token GoTokColon     -- ':'
+goTokColonEq   = token GoTokColonEq   -- ':='
+goTokEqual     = token GoTokEqual     -- '='
+goTokComma     = token GoTokComma     -- ','
+goTokFullStop  = token GoTokFullStop  -- '.'
+goTokElipsis   = token GoTokElipsis   -- '...'
 
 
 -- BEGIN operators
-goTokLOR      = do token GoTokLOR      ; return$Go2Op$GoOp "||" -- '||'
-goTokLAND     = do token GoTokLAND     ; return$Go2Op$GoOp "&&" -- '&&'
-goTokEQ       = do token GoTokEQ       ; return$Go2Op$GoOp "==" -- '=='
-goTokNE       = do token GoTokNE       ; return$Go2Op$GoOp "!=" -- '!='
-goTokLT       = do token GoTokLT       ; return$Go2Op$GoOp "<"  -- '<'
-goTokLE       = do token GoTokLE       ; return$Go2Op$GoOp "<=" -- '<='
-goTokGT       = do token GoTokGT       ; return$Go2Op$GoOp ">"  -- '>'
-goTokGE       = do token GoTokGE       ; return$Go2Op$GoOp ">=" -- '>='
-goTokPlus   f = do token GoTokPlus     ; return$  f  $GoOp "+"  -- '+'
-goTokMinus  f = do token GoTokMinus    ; return$  f  $GoOp "-"  -- '-'
-goTokIOR      = do token GoTokIOR      ; return$Go2Op$GoOp "|"  -- '|'
-goTokXOR    f = do token GoTokXOR      ; return$  f  $GoOp "^"  -- '^'
-goTokStar   f = do token GoTokAsterisk ; return$  f  $GoOp "*"  -- '*'
-goTokSolidus  = do token GoTokSolidus  ; return$Go2Op$GoOp "/"  -- '/'
-goTokPercent  = do token GoTokPercent  ; return$Go2Op$GoOp "%"  -- '%'
-goTokSHL      = do token GoTokSHL      ; return$Go2Op$GoOp "<<" -- '<<'
-goTokSHR      = do token GoTokSHR      ; return$Go2Op$GoOp ">>" -- '>>'
-goTokAND    f = do token GoTokAND      ; return$  f  $GoOp "&"  -- '&'
-goTokBUT      = do token GoTokBUT      ; return$Go2Op$GoOp "&^" -- '&^'
-goTokExclaim  = do token GoTokExclaim  ; return$Go1Op$GoOp "!"  -- '!'
-goTokArrow  f = do token GoTokArrow    ; return$  f  $GoOp "<-" -- '<-'
-goTokDec      = do token GoTokDec      ; return$Go1Op$GoOp "--" -- '--'
-goTokIng      = do token GoTokInc      ; return$Go1Op$GoOp "++" -- '++'
+goTokLOR      = do token GoTokLOR      ; return $ Go2Op $ GoOp "||" -- '||'
+goTokLAND     = do token GoTokLAND     ; return $ Go2Op $ GoOp "&&" -- '&&'
+goTokEQ       = do token GoTokEQ       ; return $ Go2Op $ GoOp "==" -- '=='
+goTokNE       = do token GoTokNE       ; return $ Go2Op $ GoOp "!=" -- '!='
+goTokLT       = do token GoTokLT       ; return $ Go2Op $ GoOp "<"  -- '<'
+goTokLE       = do token GoTokLE       ; return $ Go2Op $ GoOp "<=" -- '<='
+goTokGT       = do token GoTokGT       ; return $ Go2Op $ GoOp ">"  -- '>'
+goTokGE       = do token GoTokGE       ; return $ Go2Op $ GoOp ">=" -- '>='
+goTokPlus   f = do token GoTokPlus     ; return $   f   $ GoOp "+"  -- '+'
+goTokMinus  f = do token GoTokMinus    ; return $   f   $ GoOp "-"  -- '-'
+goTokIOR      = do token GoTokIOR      ; return $ Go2Op $ GoOp "|"  -- '|'
+goTokXOR    f = do token GoTokXOR      ; return $   f   $ GoOp "^"  -- '^'
+goTokStar   f = do token GoTokAsterisk ; return $   f   $ GoOp "*"  -- '*'
+goTokSolidus  = do token GoTokSolidus  ; return $ Go2Op $ GoOp "/"  -- '/'
+goTokPercent  = do token GoTokPercent  ; return $ Go2Op $ GoOp "%"  -- '%'
+goTokSHL      = do token GoTokSHL      ; return $ Go2Op $ GoOp "<<" -- '<<'
+goTokSHR      = do token GoTokSHR      ; return $ Go2Op $ GoOp ">>" -- '>>'
+goTokAND    f = do token GoTokAND      ; return $   f   $ GoOp "&"  -- '&'
+goTokBUT      = do token GoTokBUT      ; return $ Go2Op $ GoOp "&^" -- '&^'
+goTokExclaim  = do token GoTokExclaim  ; return $ Go1Op $ GoOp "!"  -- '!'
+goTokArrow  f = do token GoTokArrow    ; return $   f   $ GoOp "<-" -- '<-'
+goTokDec      = do token GoTokDec      ; return $ Go1Op $ GoOp "--" -- '--'
+goTokIng      = do token GoTokInc      ; return $ Go1Op $ GoOp "++" -- '++'
 -- END operators
 
-goTokAsterisk = goTokStar (\x -> ())
-goTokArrow1 = do goTokArrow (Go1Op) ; return $GoOp "<-"
-goTokArrow2 = do goTokArrow (Go2Op) ; return $GoOp "<-"
+goTokAsterisk = goTokStar (const ())
+goTokArrow1 = do goTokArrow Go1Op ; return $ GoOp "<-"
+goTokArrow2 = do goTokArrow Go2Op ; return $ GoOp "<-"
 
 -- BEGIN keywords
-goTokBreak    = token GoTokBreak
-goTokCase     = token GoTokCase
-goTokChan     = token GoTokChan
-goTokConst    = token GoTokConst
-goTokContinue = token GoTokContinue
-goTokDefault  = token GoTokDefault
-goTokDefer    = token GoTokDefer
-goTokElse     = token GoTokElse
+goTokBreak       = token GoTokBreak
+goTokCase        = token GoTokCase
+goTokChan        = token GoTokChan
+goTokConst       = token GoTokConst
+goTokContinue    = token GoTokContinue
+goTokDefault     = token GoTokDefault
+goTokDefer       = token GoTokDefer
+goTokElse        = token GoTokElse
 goTokFallthrough = token GoTokFallthrough
-goTokFor      = token GoTokFor
-goTokFunc     = token GoTokFunc
-goTokGo       = token GoTokGo
-goTokGoto     = token GoTokGoto
-goTokIf       = token GoTokIf
-goTokImport   = token GoTokImport
-goTokInterface= token GoTokInterface
-goTokMap      = token GoTokMap
-goTokPackage  = token GoTokPackage
-goTokRange    = token GoTokRange
-goTokReturn   = token GoTokReturn
-goTokSelect   = token GoTokSelect
-goTokStruct   = token GoTokStruct
-goTokSwitch   = token GoTokSwitch
-goTokType     = token GoTokType
-goTokVar      = token GoTokVar
+goTokFor         = token GoTokFor
+goTokFunc        = token GoTokFunc
+goTokGo          = token GoTokGo
+goTokGoto        = token GoTokGoto
+goTokIf          = token GoTokIf
+goTokImport      = token GoTokImport
+goTokInterface   = token GoTokInterface
+goTokMap         = token GoTokMap
+goTokPackage     = token GoTokPackage
+goTokRange       = token GoTokRange
+goTokReturn      = token GoTokReturn
+goTokSelect      = token GoTokSelect
+goTokStruct      = token GoTokStruct
+goTokSwitch      = token GoTokSwitch
+goTokType        = token GoTokType
+goTokVar         = token GoTokVar
 -- END keywords
 
 
