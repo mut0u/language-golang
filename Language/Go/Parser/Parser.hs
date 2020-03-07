@@ -9,7 +9,6 @@
 module Language.Go.Parser.Parser where
 import Language.Go.Parser.Operators
 import Language.Go.Parser.Tokens
-import Language.Go.Parser.Tokens (GoTokenPos(..))
 import Language.Go.Parser.Lexer (alexScanTokens)
 import Language.Go.Syntax.AST
 
@@ -157,7 +156,7 @@ goSignature = do
 --
 -- See also: SS. 6.8. Function types
 goResult :: GoParser [GoParam]
-goResult =  goParameters 
+goResult =  goParameters
         <|> do ty <- goType ; return [GoParam [] ty]
 
 -- | Standard @Parameters@
@@ -192,7 +191,7 @@ goParameterDecl = (try goParameterDecl') <|> goParameterDecl'' where
       t <- goType
       return $ GoParam is t
     --  return $ flip map is (\i -> GoParam (Just i) t)
-    
+
     goParameterDecl'' :: GoParser GoParam
     goParameterDecl'' = do
       t <- goType
@@ -293,7 +292,7 @@ goConstDecl = goTokConst >> liftM GoConst (goParenish goConstSpec)
 goConstSpec :: GoParser GoCVSpec
 goConstSpec = do
   id <- goIdentifierList
-  option (GoCVSpec id Nothing []) (try (goConstSpec' id) <|> goConstSpec'' id) where         
+  option (GoCVSpec id Nothing []) (try (goConstSpec' id) <|> goConstSpec'' id) where
 
     goConstSpec' :: [GoId] -> GoParser GoCVSpec
     goConstSpec' ids = do
@@ -579,7 +578,7 @@ goPrimary = goPrimary' >>= goPrimary''' where
     -- THANK YOU ski ...
     goPrimary''' :: GoPrim -> GoParser GoPrim
     goPrimary''' ex = (goPrimary'' ex >>= goPrimary''') <|> return ex
-    
+
     -- this is the right-associative parts of 'PrimaryExpr'
     goPrimary'' :: GoPrim -> GoParser GoPrim
     goPrimary'' ex =  (try $ goIndex ex)
@@ -588,7 +587,7 @@ goPrimary = goPrimary' >>= goPrimary''' where
                   <|> goCall ex
     --            <|> goSelector ex -- how to distinguish from qualified identifiers?
     --            <?> "primary expression component"
-    
+
     -- this is the beginning parts of 'PrimaryExpr'
     goPrimary' :: GoParser GoPrim
     goPrimary' =  (try goOperand)
@@ -878,7 +877,7 @@ goTypeSwitchStmt = do
   return $ GoStmtTypeSwitch ga cl id
 
 -- | Standard @TypeSwitchGuard@
-goTypeSwitchGuard :: (Maybe GoSimp) -> GoParser GoCond
+goTypeSwitchGuard :: Maybe GoSimp -> GoParser GoCond
 goTypeSwitchGuard st = do
   ex <- goExpression
   goTokFullStop
@@ -907,7 +906,7 @@ goTypeList = sepBy1 goType goTokComma
 -- See also: SS. 11.9. For statements
 goForStmt = do
   goTokFor
-  h <- (try goForClause <|> try goRangeClause <|> goCondition)
+  h <- try goForClause <|> try goRangeClause <|> goCondition
   b <- goBlock
   return $ GoStmtFor h b
 
@@ -1064,7 +1063,7 @@ goSource = do
   eof
 --goSourceRest
 --notFolloedBy anyToken
-  return $ GoSource pkg [] top
+  return $ GoSource pkg imp top
 
 -- | Nonstandard
 goSourceRest :: GoParser ()

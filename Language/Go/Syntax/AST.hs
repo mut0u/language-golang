@@ -2,7 +2,7 @@
 -- Module      : Language.Go.Syntax.AST
 -- Copyright   : (c) 2011 Andrew Robbins
 -- License     : GPLv3 (see COPYING)
--- 
+--
 -- x
 
 {-# LANGUAGE CPP #-}
@@ -16,7 +16,7 @@ data GoSource = GoSource {
       getTopLevelDecl :: [GoDecl]}
                 GO_AST_DERIVING
 
-data GoPrel = GoImportDecl [GoImpSpec]
+newtype GoPrel = GoImportDecl [GoImpSpec]
 #ifdef DSGO
             | GoPragma String
             | GoDefine
@@ -59,11 +59,11 @@ data GoMethSpec  = GoMethSpec       GoId GoSig
                 deriving (Eq, Read, Show)
 
 -- GoId (= 'identifier')
-data GoId = GoId String
+newtype GoId = GoId String
                 deriving (Eq, Read, Show)
 
 -- GoOp (= 'unary_op' = 'binary_op')
-data GoOp = GoOp String
+newtype GoOp = GoOp String
                 deriving (Eq, Read, Show)
 
 -- GoRec (= 'Receiver' = 'ReceiverType')
@@ -102,19 +102,19 @@ data GoChanKind = GoIChan  -- 1
                 deriving (Eq, Read, Show)
 
 -- GoFieldType
-data GoFieldType = GoFieldType { 
-      getFieldTag  :: String, 
-      getFieldId   :: [GoId], 
+data GoFieldType = GoFieldType {
+      getFieldTag  :: String,
+      getFieldId   :: [GoId],
       getFieldType :: GoType }
-                 | GoFieldAnon { 
-      getFieldTag  :: String, 
+                 | GoFieldAnon {
+      getFieldTag  :: String,
       getFieldPtr  :: Bool,
       getFieldType :: GoType } -- MUST be typename
                 deriving (Eq, Read, Show)
 
 {-  In the phrases below the symbol / means "is the only production which uses"
 In the phrases below the symbol - means "is NOT the only production which uses"
-InterfaceType 
+InterfaceType
 
 PrimaryExpr/Operand
 PrimaryExpr/Conversion

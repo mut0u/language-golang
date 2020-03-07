@@ -205,9 +205,9 @@ appendSemi tokens = tokens ++ semi where
     lastpos (GoTokenPos pos _) = pos
 
 insertSemi :: [GoTokenPos] -> [GoTokenPos]
-insertSemi = stripAuto . stripNone . 
-             insertAfter . stripNone . insertBefore . 
-             insertAfter . stripNone . appendSemi 
+insertSemi = stripAuto . stripNone .
+             insertAfter . stripNone . insertBefore .
+             insertAfter . stripNone . appendSemi
 
 --insertSemi = insertAfter . stripNone . insertBefore . appendSemi
 
@@ -280,31 +280,31 @@ goTokArrow1 = do goTokArrow (Go1Op) ; return $GoOp "<-"
 goTokArrow2 = do goTokArrow (Go2Op) ; return $GoOp "<-"
 
 -- BEGIN keywords
-goTokBreak    = token $ GoTokBreak
-goTokCase     = token $ GoTokCase
-goTokChan     = token $ GoTokChan
-goTokConst    = token $ GoTokConst
-goTokContinue = token $ GoTokContinue
-goTokDefault  = token $ GoTokDefault
-goTokDefer    = token $ GoTokDefer
-goTokElse     = token $ GoTokElse
-goTokFallthrough = token $ GoTokFallthrough
-goTokFor      = token $ GoTokFor
-goTokFunc     = token $ GoTokFunc
-goTokGo       = token $ GoTokGo
-goTokGoto     = token $ GoTokGoto
-goTokIf       = token $ GoTokIf
-goTokImport   = token $ GoTokImport
-goTokInterface= token $ GoTokInterface
-goTokMap      = token $ GoTokMap
-goTokPackage  = token $ GoTokPackage
-goTokRange    = token $ GoTokRange
-goTokReturn   = token $ GoTokReturn
-goTokSelect   = token $ GoTokSelect
-goTokStruct   = token $ GoTokStruct
-goTokSwitch   = token $ GoTokSwitch
-goTokType     = token $ GoTokType
-goTokVar      = token $ GoTokVar
+goTokBreak    = token GoTokBreak
+goTokCase     = token GoTokCase
+goTokChan     = token GoTokChan
+goTokConst    = token GoTokConst
+goTokContinue = token GoTokContinue
+goTokDefault  = token GoTokDefault
+goTokDefer    = token GoTokDefer
+goTokElse     = token GoTokElse
+goTokFallthrough = token GoTokFallthrough
+goTokFor      = token GoTokFor
+goTokFunc     = token GoTokFunc
+goTokGo       = token GoTokGo
+goTokGoto     = token GoTokGoto
+goTokIf       = token GoTokIf
+goTokImport   = token GoTokImport
+goTokInterface= token GoTokInterface
+goTokMap      = token GoTokMap
+goTokPackage  = token GoTokPackage
+goTokRange    = token GoTokRange
+goTokReturn   = token GoTokReturn
+goTokSelect   = token GoTokSelect
+goTokStruct   = token GoTokStruct
+goTokSwitch   = token GoTokSwitch
+goTokType     = token GoTokType
+goTokVar      = token GoTokVar
 -- END keywords
 
 
@@ -347,4 +347,3 @@ goAssignOp = try $ do
                       else fail "Assignment What?"
     GoTokEqual     -> do anyToken; return (GoOp "=")
     x -> unexpected (show x)
-  
